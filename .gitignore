@@ -1,0 +1,4 @@
+/server/resources/twig_cache/
+/server/socket/Socket.log
+/server/logs/
+/vendor/

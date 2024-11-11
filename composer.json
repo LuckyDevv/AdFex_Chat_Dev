@@ -1,0 +1,17 @@
+{
+  "require": {
+    "php": "^8.1",
+    "cboden/ratchet": "^0.4.4",
+    "twig/twig": "^3.0",
+    "phpmailer/phpmailer": "^6.9.2",
+    "egulias/email-validator": "^4.0.1",
+    "ext-pdo": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "db_managers\\": "server/db_managers",
+      "controllers\\": "server/controllers",
+      "socket\\": "server/socket"
+    }
+  }
+}

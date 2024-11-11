@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="src/css/auth.css" rel="stylesheet">
+    <link href="../src/css/preloader.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ site_logo }}">
+    <title>{{ site_name }} - Авторизация</title>
+    <!-- META TAGS - OG & TWITTER -->
+    <meta name="description" content="{{ site_description }}">
+    <meta property="og:url" content="{{ site_domain }}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ site_name }}">
+    <meta property="og:description" content="{{ site_description }}">
+    <meta property="og:image" content="{{ site_banner }}">
+    <meta property="og:image:width" content="2712">
+    <meta property="og:image:height" content="1139">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="{{ site_domain }}">
+    <meta property="twitter:url" content="{{ site_banner }}">
+    <meta name="twitter:title" content="{{ site_name }}">
+    <meta name="twitter:description" content="{{ site_description }}">
+    <meta name="twitter:image" content="">
+</head>
+<body>
+<div class="preloader" id="main_preloader">
+    <!-- Прелоадер -->
+    <div class="preloader__row">
+        <div class="preloader__item"></div>
+        <div class="preloader__item"></div>
+    </div>
+</div>
+<div class="logo">
+    <img src="{{ site_logo }}" alt="">
+    <t>{{ site_name }}</t>
+</div>
+<div class="container-main" id="content_auth">
+    <!-- Форма ввода почты -->
+    <div class="auth-form" id="email_form">
+        <div class="auth-text-1">Вход в {{ site_name }}</div>
+        <form class="form" autocomplete="off">
+            <t class="notify" id="notify_auth_email"></t>
+            <div class="group-form">
+                <input class="auth-input" id="auth_input_email"  autocomplete="enter-id" required type="text">
+                <label class="auth-label" id="auth_label_email" for="auth_input_email">Введите вашу почту</label>
+            </div>
+        </form>
+        <button class="auth-button-next" id="auth_button_email_next" type="button">
+            <span class="auth-button-text" id="auth_email_span">Продолжить</span>
+        </button>
+    </div>
+    <!-- Форма ввода пароля -->
+    <div class="auth-form" id="password_form" style="display: none">
+        <div class="auth-text-1">Введите пароль</div>
+        <form class="form" autocomplete="off">
+            <t class="notify" id="notify_auth_password"></t>
+            <div class="group-form">
+                <input class="auth-input" id="auth_input_password" autocomplete="enter-pwd" required type="password">
+                <label class="auth-label" id="auth_label_password" for="auth_input_password">Введите пароль</label>
+            </div>
+        </form>
+        <div class="auth-show-pass-group" id="auth_tips">
+            <t id="auth_show_pass" style="cursor: pointer">Показать пароль</t>
+            <t id="auth_forgot_pass" style="cursor: pointer">Забыли пароль?</t>
+        </div>
+        <button class="auth-button-next" id="auth_button_password_next" type="button">
+            <span class="auth-button-text" id="auth_password_span">Продолжить</span>
+        </button>
+        <button class="auth-button-prev" id="auth_button_password_prev" type="button">
+            <span class="auth-button-text">Назад</span>
+        </button>
+    </div>
+    <!-- Форма ввода кода с почты для авторизации -->
+    <div class="auth-form" id="confirm_form_auth" style="display: none">
+        <div class="auth-text-1">Введите код подтверждения</div>
+        <form class="form" autocomplete="off">
+            <t class="notify" id="notify_code_auth" style="color: #808080;">Мы отправили код подтверждения на вашу почту. Если не видите письмо, проверьте папку "Спам"</t>
+            <div class="group-form">
+                <input class="auth-input" id="auth_input_code" autocomplete="enter-code" required type="number">
+                <label class="auth-label" id="auth_label_code" for="auth_input_code">Введите код подтверждения</label>
+            </div>
+        </form>
+        <button class="auth-button-next" id="auth_button_code_next" type="button">
+            <span class="auth-button-text" id="auth_code_span">Продолжить</span>
+        </button>
+        <button class="auth-button-prev" id="auth_button_code_prev" type="button">
+            <span class="auth-button-text">Назад</span>
+        </button>
+    </div>
+    <!-- Форма регистрации -->
+    <div class="auth-form" id="reg_form" style="display: none">
+        <div class="auth-text-1">Регистрация в {{ site_name }}</div>
+        <form class="form" autocomplete="off">
+            <t class="notify" id="notify_reg_email"></t>
+            <div class="group-form">
+                <input class="auth-input" id="reg_input_email" autocomplete="new-email" required type="text">
+                <label class="auth-label" id="reg_label_email" for="reg_input_email">Введите почту</label>
+            </div>
+            <t class="notify" id="notify_reg_name"></t>
+            <div class="group-form">
+                <input class="auth-input" id="reg_input_name" autocomplete="new-name" required type="text">
+                <label class="auth-label" id="reg_label_name"  for="reg_input_name">Введите ваше имя</label>
+            </div>
+            <t class="notify" id="notify_reg_surname"></t>
+            <div class="group-form">
+                <input class="auth-input" id="reg_input_surname" autocomplete="new-surname" required type="text">
+                <label class="auth-label" id="reg_label_surname"  for="reg_input_surname">Введите вашу фамилию</label>
+            </div>
+            <t class="notify" id="notify_reg_pass"></t>
+            <div class="group-form">
+                <input class="auth-input" id="reg_input_password" autocomplete="new-password" required type="password">
+                <label class="auth-label" id="reg_label_password"  for="reg_input_password">Придумайте пароль</label>
+            </div>
+            <t class="notify" id="notify_reg_pass_2"></t>
+            <div class="group-form">
+                <input class="auth-input" id="reg_input_password_2" autocomplete="new-password" required type="password">
+                <label class="auth-label" id="reg_label_password_2"  for="reg_input_password_2">Повторите пароль</label>
+            </div>
+        </form>
+        <div class="auth-show-pass-group" id="reg_tips_id">
+            <t id="reg_show_pass" style="cursor: pointer">Показать пароль</t>
+        </div>
+        <button class="auth-button-next" id="reg_button_next" type="button">
+            <span class="auth-button-text" id="reg_span">Продолжить</span>
+        </button>
+        <button class="auth-button-prev" id="reg_button_prev" type="button">
+            <span class="auth-button-text">Назад</span>
+        </button>
+    </div>
+    <!-- Форма ввода кода с почты для регистрации -->
+    <div class="auth-form" id="confirm_form_reg" style="display: none">
+        <div class="auth-text-1">Введите код подтверждения</div>
+        <form class="form" autocomplete="off">
+            <t class="notify" id="notify_code_reg" style="color: #808080;">Мы отправили код подтверждения на вашу почту. Если не видите письмо, проверьте папку "Спам"</t>
+            <div class="group-form">
+                <input class="auth-input" id="reg_input_code" autocomplete="enter-code" required type="number">
+                <label class="auth-label" id="reg_label_code" for="reg_input_code">Введите код подтверждения</label>
+            </div>
+        </form>
+        <button class="auth-button-next" id="reg_button_code_next" type="button">
+            <span class="auth-button-text" id="reg_code_span">Продолжить</span>
+        </button>
+        <button class="auth-button-prev" id="reg_button_code_prev" type="button">
+            <span class="auth-button-text">Назад</span>
+        </button>
+    </div>
+    <!-- Форма "Забыли пароль" -->
+    <div class="auth-form" id="forgot_form" style="display: none">
+        <div class="auth-text-1">Восстановление аккаунта</div>
+        <form class="form" autocomplete="off">
+            <t class="notify" id="notify_forgot_new_password"></t>
+            <div class="group-form">
+                <input class="auth-input" id="forgot_input_new_password" autocomplete="new-password" required type="password">
+                <label class="auth-label" id="forgot_label_new_password"  for="forgot_input_new_password">Введите новый пароль</label>
+            </div>
+            <t class="notify" id="notify_forgot_new_password_2"></t>
+            <div class="group-form">
+                <input class="auth-input" id="forgot_input_new_password_2" autocomplete="new-password" required type="password">
+                <label class="auth-label" id="forgot_label_new_password_2"  for="forgot_input_new_password_2">Повторите новый пароль</label>
+            </div>
+            <t class="notify" id="notify_code_forgot" style="color: #808080;">Мы отправили код подтверждения на вашу почту. Если не видите письмо, проверьте папку "Спам"</t>
+            <div class="group-form">
+                <input class="auth-input" id="forgot_input_code" autocomplete="enter-code" required type="number">
+                <label class="auth-label" id="forgot_label_code" for="forgot_input_code">Введите код подтверждения</label>
+            </div>
+        </form>
+        <div class="auth-show-pass-group" id="forgot_tips">
+            <t id="forgot_show_pass" style="cursor: pointer">Показать пароль</t>
+        </div>
+        <button class="auth-button-next" id="forgot_form_next" type="button">
+            <span class="auth-button-text" id="forgot_form_span">Продолжить</span>
+        </button>
+        <button class="auth-button-prev" id="forgot_form_prev" type="button">
+            <span class="auth-button-text">Назад</span>
+        </button>
+    </div>
+</div>
+<div class="no-support-device" hidden="hidden" id="no_support" style="display: none;">
+    <!-- Блок сообщает о том, что приложение не поддерживается на устройстве пользователя. Вызывается только если у пользователя ширина экрана меньше 300 пикселей -->
+    <div class="no-support-container">
+        <div class="no-support-message">
+            <img src="../src/images/cry_duck.gif" alt="">
+            <div>
+                К сожалению, наше приложение не поддерживается на вашем устройстве
+            </div>
+        </div>
+    </div>
+</div>
+<div id="js">
+    <!-- ЖаваСкрипт -->
+    <script src="../src/js/libs/jquery.min.js"></script>
+    <script src="../src/js/libs/device-uuid.min.js"></script>
+    <script src="src/js/socket.js"></script>
+    <script src="src/js/auth.js"></script>
+</div>
+</body>
