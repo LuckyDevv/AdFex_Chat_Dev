@@ -6,7 +6,7 @@ class Configuration
     public const SETTINGS = [
         "name" => "YattoGram",
         "description" => "YattoGram - Это современный мессенджер. Современный дизайн, удобство использования и эргономичность.",
-        "logo" => "../src/images/logo-2.png",
+        "logo" => "src/images/logo-2.png",
         "banner" => "",
         "domain" => ""
     ];
@@ -16,13 +16,14 @@ class Configuration
         "user" => "root",
         "password" => "eather1192@How91",
     ];
-    public const DATA_SERVER = [
-        [
-            "name" => "DC1",
-            "host" => "1.1.1.1",
-            "port" => "3306",
-            "user" => "root",
-            "password" => "",
-        ],
+    public const MAIL_SETTINGS = [
+        "name" => "YattoGram",
+        "smtp" => [
+            "address" => "smtp.gmail.com",
+            "port" => 465,
+            "username" => "wallet.eather@gmail.com",
+            "password" => "bcnd bkbx mkkj lhmu",
+            "protocol" => "ssl"
+        ]
     ];
 }

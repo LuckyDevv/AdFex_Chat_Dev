@@ -1,3 +1,5 @@
+var search_opened = false;
+
 function setCookie(cookie_name, cookie_value, cookie_age=7200) {
     document.cookie = `${cookie_name}=${cookie_value};max-age=${cookie_age};path=/`;
 }
@@ -32,4 +34,37 @@ function getCurrentMoth() {
         "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
     ];
     return monthNames[new Date().getMonth()];
+}
+
+document.getElementById("menu_button").addEventListener("click", function (){
+    if (search_opened) {
+        search_opened = false;
+        switch_menu();
+    }
+});
+document.getElementById("search_users").addEventListener("focus", function () {
+    search_opened = true;
+    switch_menu();
+});
+document.getElementById("search_users").addEventListener("blur", function () {
+    if (search_opened) {
+        search_opened = false;
+        switch_menu();
+    }
+});
+function switch_menu () {
+    var menu = document.getElementById("menu_button");
+    if (search_opened) {
+        menu.classList.remove("wrap-menu");
+        menu.classList.add("wrap-cancel");
+        setTimeout(function (){
+            menu.src = "src/svg/back.svg";
+        }, 100);
+    }else{
+        menu.classList.remove("wrap-cancel");
+        menu.classList.add("wrap-menu");
+        setTimeout(function (){
+            menu.src = "src/svg/menu.svg";
+        }, 100);
+    }
 }

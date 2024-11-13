@@ -69,7 +69,7 @@ class Accounts_DB extends DB
     }
     public function account_reg(string $email, string $name, string $surname, string $password, int $account_type=1, bool $encrypt=true): int {
         try {
-            $id = $this->getMaxId()+1;
+            $id = $this->getMaxId();
             switch ($id) {
                 case -4:
                 case -3:
@@ -112,6 +112,36 @@ class Accounts_DB extends DB
         return $this->auth_account($prepare, $password, $encrypt);
     }
 
+    public function account_password_update_email(string $email, string $new_password, bool $encrypt=true): int {
+        try {
+            $email = base64_encode($email);
+            $new_password = $encrypt ? hash("sha3-512", $new_password) : $new_password;
+            $prepare = $this->db->prepare("UPDATE `accounts` SET `password_hash` = :new_password WHERE `email` = :email;");
+            $prepare->bindValue(":new_password", $new_password);
+            $prepare->bindValue(":email", $email);
+            return $prepare->execute() ? 1 : 0;
+        }catch(PDOException $e) {
+            $this->createLog("Accounts_DB", $e);
+            return -1;
+        }
+    }
+    public function name_get_by_email(string $email): ?string {
+        try {
+            $email = base64_encode($email);
+            $prepare = $this->db->prepare("SELECT `name` FROM `accounts` WHERE `email`=:email;");
+            $prepare->bindValue(":email", $email);
+            if ($prepare->execute()) {
+                $fetch = $prepare->fetch(PDO::FETCH_ASSOC);
+                if ($fetch !== false && isset($fetch["name"])) {
+                    return base64_decode($fetch["name"]);
+                }
+            }
+        }catch(PDOException $e) {
+            $this->createLog("Accounts_DB", $e);
+        }
+        return null;
+    }
+
     private function getMaxId(): int {
         try {
             $stmt = $this->db->query("SELECT MAX(`id`) AS 'max_id' FROM `accounts`;");
@@ -131,7 +161,7 @@ class Accounts_DB extends DB
                 $fetch = $prepare->fetch(PDO::FETCH_ASSOC);
                 if (isset($fetch['password_hash'])) {
                     $password = $encrypt ? hash("sha3-512", $password) : $password;
-                    if ($password === $fetch['password_hash']) {
+                    if ($password == $fetch['password_hash']) {
                         return 1;
                     }else return 0;
                 }else return -1;

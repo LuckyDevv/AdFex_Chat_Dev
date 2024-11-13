@@ -218,3 +218,6 @@ setInterval(function () {
         }));
     }
 }, 50000);*/
+$('#main_preloader').fadeOut().end().delay(400).fadeOut('slow');
+document.getElementById("content").style.display = "";
+document.getElementById("content").removeAttribute("hidden");

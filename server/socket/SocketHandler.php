@@ -2,7 +2,9 @@
 
 namespace socket;
 
+use controllers\MailController;
 use db_managers\Accounts_DB;
+use db_managers\Sessions_DB;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 use SplObjectStorage;
@@ -44,10 +46,7 @@ class SocketHandler implements MessageComponentInterface
         unset($conn);
     }
 
-    public function onError(ConnectionInterface $conn, \Exception $e)
-    {
-        // TODO: Implement onError() method.
-    }
+    public function onError(ConnectionInterface $conn, \Exception $e){}
 
     /*
     RESPONSE CODES:
@@ -58,6 +57,8 @@ class SocketHandler implements MessageComponentInterface
     5 - Успешная регистрация, отправляется Session_ID к клиенту
     6 - Пароль при авторизации верный, код подтверждения авторизации отправлен на почту
     7 - Успешная авторизация, отправляется Session_ID к клиенту
+    8 - Код для восстановления пароля отправлен на почту
+    9 - Успешно сменён пароль, отправляется Session_ID к клиенту
 
     ERROR CODES:
     1 - Ошибка при чекинге почты
@@ -70,6 +71,12 @@ class SocketHandler implements MessageComponentInterface
     9 - Ошибки при завершении регистрации / введённым кодом подтверждения
     10 - Ошибки с паролем при авторизации
     11 - Ошибка авторизации / введённым кодом подтверждения
+    12 - Ошибки при переходе к смене пароля
+    13 - Системные ошибки смены пароля
+    14 - Ошибки нового пароля при смене пароля
+    15 - Ошибки подтверждения пароля при смене пароля
+    16 - Подтверждение пароля не совпадает с паролем при смене пароля
+    17 - Ошибки с кодом подтверждения при смене пароля
     */
     public function onMessage(ConnectionInterface $from, $msg): void
     {
@@ -133,19 +140,20 @@ class SocketHandler implements MessageComponentInterface
                                                         if (strtolower($decode["password"]) != $decode["password"]) {
                                                             if (isset($decode["password_confirmation"])) {
                                                                 if ($decode["password_confirmation"] === $decode["password"]) {
-                                                                    // TODO: Send code to email
                                                                     $code = rand(100000, 999999);
-                                                                    $this->uuid_requests[$decode["uuid"]] = [
-                                                                        "type" => "reg",
-                                                                        "email" => $decode["email"],
-                                                                        "uuid" => $decode["uuid"],
-                                                                        "name" => $decode["name"],
-                                                                        "surname" => $decode["surname"],
-                                                                        "password" => $decode["password"],
-                                                                        "code" => $code
-                                                                    ];
-                                                                    $this->sendMessage($from, "Код подтверждения отправлен на почту!", 4);
-                                                                    $this->log($code, self::DEBUG);
+                                                                    if ((new MailController($decode["email"], $decode["name"]))->sendCode((string) $code, 0)) {
+                                                                        $this->uuid_requests[$decode["uuid"]] = [
+                                                                            "type" => "reg",
+                                                                            "email" => $decode["email"],
+                                                                            "uuid" => $decode["uuid"],
+                                                                            "name" => $decode["name"],
+                                                                            "surname" => $decode["surname"],
+                                                                            "password" => $decode["password"],
+                                                                            "code" => $code
+                                                                        ];
+                                                                        $this->sendMessage($from, "Код подтверждения отправлен на почту!", 4);
+                                                                        $this->log($code, self::DEBUG);
+                                                                    }else $this->sendMessage($from, "Не удалось отправить код подтверждения", 3, true);
                                                                 }else $this->sendMessage($from, "Подтверждение пароля не совпадает с паролем!", 8, true);
                                                             }else $this->sendMessage($from, "Вы не ввели подтверждение пароля!", 7, true);
                                                         }else $this->sendMessage($from, "Пароль должен содержать минимум 1 заглавную букву!", 6, true);
@@ -160,7 +168,7 @@ class SocketHandler implements MessageComponentInterface
                     }else $this->sendMessage($from, "Вы не ввели почту!", 3, true);
                     break;
                 case "registration_step2":
-                    if (isset($decode["uuid"], $decode["code"])) {
+                    if (isset($decode["uuid"], $decode["code"], $decode["browser"], $decode["os"])) {
                         if (isset($this->uuid_requests[$decode["uuid"]]) && $this->uuid_requests[$decode["uuid"]]["type"] == "reg") {
                             $user_info = $this->uuid_requests[$decode["uuid"]];
                             if ($decode["code"] == $user_info["code"]) {
@@ -170,9 +178,19 @@ class SocketHandler implements MessageComponentInterface
                                     $user_info["name"],
                                     $user_info["surname"],
                                     $user_info["password"]
-                                )) {
-                                    // TODO: Create session and send session id to client
-                                    $this->sendMessage($from, "Вы успешно зарегистрированы!", 5);
+                                ) === 1) {
+                                    $sessions_db = new Sessions_DB();
+                                    switch (($session_id = $sessions_db->create_session($user_info["email"], $user_info["password"], $decode["browser"], $decode["os"], $decode["uuid"]))) {
+                                        case "err_1":
+                                            $this->sendMessage($from, "Не удалось создать сессию!", 9, true);
+                                            break;
+                                        case "err_2":
+                                            $this->sendMessage($from, "Произошла ошибка в базе данных!", 9, true);
+                                            break;
+                                        default:
+                                            $this->sendMessage($from, $session_id, 5);
+                                            break;
+                                    }
                                 }else $this->sendMessage($from, "Не удалось зарегистрировать аккаунт!", 9, true);
                             }else $this->sendMessage($from, "Вы ввели неверный код!", 9, true);
                         }else $this->sendMessage($from, "Запрос на регистрацию не создан!", 9, true);
@@ -185,12 +203,16 @@ class SocketHandler implements MessageComponentInterface
                             $accounts_db = new Accounts_DB();
                             switch (($ans = $accounts_db->account_auth_email($this->uuid_requests[$decode["uuid"]]["email"], $password))) {
                                 case 1:
-                                    $this->sendMessage($from, "Email code sended", 6, false, false);
+                                    $name = $accounts_db->name_get_by_email($this->uuid_requests[$decode["uuid"]]["email"]);
+                                    $name = is_string($name) ? $name : "Неизвестный";
                                     $code = rand(100000, 999999);
-                                    $this->uuid_requests[$decode["uuid"]]["type"] = "auth_finish";
-                                    $this->uuid_requests[$decode["uuid"]]["password"] = $password;
-                                    $this->uuid_requests[$decode["uuid"]]["code"] = $code;
-                                    $this->log($code, self::DEBUG);
+                                    if ((new MailController($this->uuid_requests[$decode["uuid"]]["email"], $name))->sendCode((string) $code, 1)) {
+                                        $this->sendMessage($from, "Email code sended", 6, false, false);
+                                        $this->uuid_requests[$decode["uuid"]]["type"] = "auth_finish";
+                                        $this->uuid_requests[$decode["uuid"]]["password"] = $password;
+                                        $this->uuid_requests[$decode["uuid"]]["code"] = $code;
+                                        $this->log($code, self::DEBUG);
+                                    }else $this->sendMessage($from, "Не удалось отправить код подтверждения.", 10, true);
                                     break;
                                 case 0:
                                     $this->sendMessage($from, "Вы ввели неверный пароль!", 10, true);
@@ -203,12 +225,22 @@ class SocketHandler implements MessageComponentInterface
                     }else $this->sendMessage($from, "Вы не ввели пароль!", 10, true);
                     break;
                 case "auth_finish":
-                    if (isset($decode["uuid"], $decode["code"])) {
+                    if (isset($decode["uuid"], $decode["code"], $decode["browser"], $decode["os"])) {
                         if (isset($this->uuid_requests[$decode["uuid"]]) && $this->uuid_requests[$decode["uuid"]]["type"] === "auth_finish") {
                             $user_info = $this->uuid_requests[$decode["uuid"]];
                             if ($decode["code"] == $user_info["code"]) {
-                                // TODO: Create session and send session id to user
-                                $this->sendMessage($from, "Успешная авторизация!", 7, false, false);
+                                $sessions_db = new Sessions_DB();
+                                switch (($session_id = $sessions_db->create_session($user_info["email"], $user_info["password"], $decode["browser"], $decode["os"], $decode["uuid"]))) {
+                                    case "err_1":
+                                        $this->sendMessage($from, "Не удалось создать сессию!", 11, true);
+                                        break;
+                                    case "err_2":
+                                        $this->sendMessage($from, "Произошла ошибка в базе данных!", 11, true);
+                                        break;
+                                    default:
+                                        $this->sendMessage($from, $session_id, 7);
+                                        break;
+                                }
                             }else $this->sendMessage($from, "Вы ввели неверный код!", 11, true);
                         }else $this->sendMessage($from, "Не создан запрос на авторизацию!", 11, true);
                     }else $this->sendMessage($from, "Вы не ввели код!", 11, true);
@@ -218,40 +250,51 @@ class SocketHandler implements MessageComponentInterface
                         if (isset($this->uuid_requests[$decode["uuid"]]) && $this->uuid_requests[$decode["uuid"]]["type"] === "auth") {
                             $user_info = $this->uuid_requests[$decode["uuid"]];
                             $code = rand(100000, 999999);
-                            // TODO: Send code to email
-                            $this->sendMessage($from, "Код подтверждения отправлен на почту!", 8, false, false);
-                            $this->log($code, self::DEBUG);
-                            $this->uuid_requests[$decode["uuid"]]["type"] = "forgot_start";
+                            $name = (new Accounts_DB())->name_get_by_email($user_info["email"]);
+                            $name = is_string($name) ? $name : "Неизвестный";
+                            if ((new MailController($user_info["email"], $name))->sendCode((string) $code, 2)) {
+                                $this->sendMessage($from, "Код подтверждения отправлен на почту!", 8, false, false);
+                                $this->log($code, self::DEBUG);
+                                $this->uuid_requests[$decode["uuid"]]["type"] = "forgot_start";
+                                $this->uuid_requests[$decode["uuid"]]["code"] = $code;
+                            }else $this->sendMessage($from, "Не удалось отправить код на почту!", 12, true);
                         }else $this->sendMessage($from, "Запрос на авторизацию не создан!", 12, true);
                     }else $this->sendMessage($from, "Не передан UUID!", 12, true);
                     break;
                 case "forgot_end":
-                    if (isset($decode["uuid"])) {
+                    if (isset($decode["uuid"], $decode["browser"], $decode["os"])) {
                         if (isset($this->uuid_requests[$decode["uuid"]]) && $this->uuid_requests[$decode["uuid"]]["type"] === "forgot_start") {
-                            if (isset($decode["old_password"])) {
-                                $accounts_db = new Accounts_DB();
-                                $user_info = $this->uuid_requests[$decode["uuid"]];
-                                if ($accounts_db->account_auth_email($user_info["email"], $decode["old_password"])) {
-                                    if (isset($decode["new_password"])) {
-                                        $new_password = $decode["new_password"];
-                                        if (strlen($new_password) >= 8) {
-                                            if ($new_password != strtolower($new_password)) {
-                                                if (isset($decode["new_password_confirm"])) {
-                                                    if ($decode["new_password"] == $decode["new_password_confirm"]) {
-                                                        if (isset($decode["code"])) {
-                                                            if ($user_info["code"] == $decode["code"]) {
-                                                                // TODO: Update password
-                                                                // TODO: After updating password create session and send session_id to user
-                                                                $this->sendMessage($from, "Вы успешно сменили пароль!", 9, false, false);
-                                                            }else $this->sendMessage($from, "Вы ввели неверный код подтверждения!", 18, true);
-                                                        }else $this->sendMessage($from, "Вы не ввели код подтверждения!", 18, true);
-                                                    }else $this->sendMessage($from, "Подтверждение пароля не совпадает с паролем!", 17, true);
-                                                }else $this->sendMessage($from, "Вы не ввели подтверждение пароля", 16, true);
-                                            }else $this->sendMessage($from, "В пароле должна быть минимум 1 заглавная буква!", 15, true);
-                                        }else $this->sendMessage($from, "Пароль должен состоять минимум из 8 символов!", 15, true);
-                                    }else $this->sendMessage($from, "Вы не ввели новый пароль!", 15, true);
-                                }else $this->sendMessage($from, "Неверный старый пароль!", 14, true);
-                            }else $this->sendMessage($from, "Вы не ввели старый пароль!", 14, true);
+                            $accounts_db = new Accounts_DB();
+                            $user_info = $this->uuid_requests[$decode["uuid"]];
+                            if (isset($decode["new_password"])) {
+                                $new_password = $decode["new_password"];
+                                if (strlen($new_password) >= 8) {
+                                    if ($new_password != strtolower($new_password)) {
+                                        if (isset($decode["new_password_confirm"])) {
+                                            if ($decode["new_password"] == $decode["new_password_confirm"]) {
+                                                if (isset($decode["code"])) {
+                                                    if ($user_info["code"] == $decode["code"]) {
+                                                        if ($accounts_db->account_password_update_email($user_info["email"], $new_password) == 1) {
+                                                            $sessions_db = new Sessions_DB();
+                                                            switch (($session_id = $sessions_db->create_session($user_info["email"], $new_password, $decode["browser"], $decode["os"], $decode["uuid"]))) {
+                                                                case "err_1":
+                                                                    $this->sendMessage($from, "Не удалось создать сессию!", 13, true);
+                                                                    break;
+                                                                case "err_2":
+                                                                    $this->sendMessage($from, "Произошла ошибка в базе данных!", 13, true);
+                                                                    break;
+                                                                default:
+                                                                    $this->sendMessage($from, $session_id, 9);
+                                                                    break;
+                                                            }
+                                                        }else $this->sendMessage($from, "Не удалось сменить пароль.", 13, true);
+                                                    }else $this->sendMessage($from, "Вы ввели неверный код подтверждения!", 17, true);
+                                                }else $this->sendMessage($from, "Вы не ввели код подтверждения!", 17, true);
+                                            }else $this->sendMessage($from, "Подтверждение пароля не совпадает с паролем!", 16, true);
+                                        }else $this->sendMessage($from, "Вы не ввели подтверждение пароля", 15, true);
+                                    }else $this->sendMessage($from, "В пароле должна быть минимум 1 заглавная буква!", 14, true);
+                                }else $this->sendMessage($from, "Пароль должен состоять минимум из 8 символов!", 14, true);
+                            }else $this->sendMessage($from, "Вы не ввели новый пароль!", 14, true);
                         }else $this->sendMessage($from, "Запрос на сброс пароля не создан!", 13, true);
                     }else $this->sendMessage($from, "Не передан UUID!", 13, true);
                     break;
