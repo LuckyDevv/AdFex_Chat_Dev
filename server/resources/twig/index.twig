@@ -30,9 +30,9 @@
         <div class="preloader__item"></div>
     </div>
 </div>
-<div class="container-main" id="content"  hidden="hidden" style="display: none;">
-    <div style="display: flex; width: 100%">
-        <div class="block-chat-list">
+<div class="container-main" id="content" style="display: none;">
+    <div style="display: flex; width: 100%; height: 100vh">
+        <div class="block-chat-list" id="chat_list">
             <div class="block-header">
                 <div class="button-menu">
                     <img src="src/svg/menu.svg" id="menu_button" alt="Menu">
@@ -40,30 +40,78 @@
                 <div class="group-search">
                     <label>
                         <input placeholder="Поиск" id="search_users" type="text">
+                        <i class="clear-search" id="clear_search" style="display: none" tabindex="-1"></i>
+                        <i class="icon-search" id="icon_search" tabindex="-1"></i>
                     </label>
                 </div>
             </div>
             <div class="block-chats">
-                <div class="block-chat-info">
-                    <img src="src/images/background.jpg" alt="User Avatar">
+                <div class="block-chat-info" user_id="1">
+                    <img src="src/images/test_user.jpg" alt="User Avatar">
                     <div class="text-info">
-                        <t class="chat-name">Брат (Спотифай)</t>
-                        <t class="chat-message">АХВАХЫВАХЫВХАЫВХАЫВХАЫВХАХЫВАХЫВХАЫВХ</t>
+                        <div class="chat-top-info">
+                            <t class="chat-name">Тестовый пользователь DT</t>
+                            <div class="chat-time">
+                                <img src="src/svg/double_check.svg" alt="check">
+                                <t>12:06</t>
+                            </div>
+                        </div>
+                        <t class="chat-message">Тестовое сообщение, 1 2 3 4 5 6 7 8 9 0, Тест тест тест тест тест тест тест</t>
                     </div>
+                </div>
+                <div class="block-chat-info" user_id="2">
+                    <img src="src/images/test_user.jpg" alt="User Avatar">
+                    <div class="text-info">
+                        <div class="chat-top-info">
+                            <t class="chat-name">Тестовый пользователь DT</t>
+                            <div class="chat-time">
+                                <img src="src/svg/double_check.svg" alt="check">
+                                <t>12:06</t>
+                            </div>
+                        </div>
+                        <t class="chat-message">Тестовое сообщение, 1 2 3 4 5 6 7 8 9 0, Тест тест тест тест тест тест тест</t>
+                    </div>
+                </div>
+                <div class="block-chat-info" user_id="3">
+                    <img src="src/images/test_user.jpg" alt="User Avatar">
+                    <div class="text-info">
+                        <div class="chat-top-info">
+                            <t class="chat-name">Тестовый пользователь DT</t>
+                            <div class="chat-time">
+                                <img src="src/svg/double_check.svg" alt="check">
+                                <t>12:06</t>
+                            </div>
+                        </div>
+                        <t class="chat-message">Тестовое сообщение, 1 2 3 4 5 6 7 8 9 0, Тест тест тест тест тест тест тест</t>
+                    </div>
+                </div>
+                <div style="height: 70px">
                 </div>
             </div>
         </div>
-        <div class="block-chat">
-            <div class="block-chat-header">
-                Chat Header Panel
+        <div class="block-chat" id="chat_dialog" style="display: none">
+            <div class="block-chat-header" id="chat_header" style="display: none">
+                <div class="group-el-ci">
+                    <img src="src/svg/back.svg" alt="Back" class="close-chat" id="chat_close">
+                    <div class="chat-chat-info">
+                        <img src="src/images/test_user.jpg" alt="Chat Avatar" class="chat-avatar" id="chat_avatar">
+                        <div class="chat-info">
+                            <t class="chat-name" id="chat_name">Тестовый пользователь</t>
+                            <t class="chat-about">был(а) в 17:08</t>
+                        </div>
+                    </div>
+                </div>
+                <img src="src/svg/triples.svg" alt="Menu" class="chat-menu">
             </div>
-            <div class="block-chat-input">
-                <div class="message-input">
-                    Message Input
+            <div class="block-chat-input" id="chat_input" style="display: none">
+                <div class="message-input" contenteditable="true" placeholder="Сообщение...">
                 </div>
                 <div class="message-button-send">
-
+                    <img src="src/svg/send.svg" alt="Send">
                 </div>
+            </div>
+            <div class="div_chat_spinner" id="chat_spinner">
+                <img class="chat_spinner" src="src/svg/spinner.svg" alt="Loading...">
             </div>
         </div>
     </div>
@@ -127,5 +175,7 @@
     <script src="src/js/main.js"></script>
     <script src="src/js/socket.js"></script>
     <script src="src/js/loader.js"></script>
+    <img src="src/svg/back.svg" alt="hide" style="display: none" id="back_svg">
+    <img src="src/svg/menu.svg" alt="hide_2" style="display: none" id="menu_svg">
 </div>
 </body>
