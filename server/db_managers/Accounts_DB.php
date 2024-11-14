@@ -29,6 +29,7 @@ class Accounts_DB extends DB
                 `user_info` TEXT NOT NULL,
                 `phone_number` TEXT NOT NULL,
                 `email_auth` BOOLEAN NOT NULL DEFAULT TRUE,
+                `user_chats` TEXT NOT NULL,
                 PRIMARY KEY (`id`, `email`, `username`)
             );");
         }catch(PDOException $e) {
@@ -83,7 +84,7 @@ class Accounts_DB extends DB
             }
             $username = "id_user".$id;
             $password = $encrypt ? hash("sha3-512", $password) : $password;
-            $prepare = $this->db->prepare("INSERT INTO `accounts` VALUES (:id,:email,:name,:surname,:username,DEFAULT,:password,:type,DEFAULT,DEFAULT,'',DEFAULT,DEFAULT,'','',DEFAULT);");
+            $prepare = $this->db->prepare("INSERT INTO `accounts` VALUES (:id,:email,:name,:surname,:username,DEFAULT,:password,:type,DEFAULT,DEFAULT,'',DEFAULT,DEFAULT,'','',DEFAULT,:chats);");
             $prepare->bindValue(":id", $id, PDO::PARAM_INT);
             $email = base64_encode($email);
             $prepare->bindValue(":email", $email);
@@ -94,6 +95,7 @@ class Accounts_DB extends DB
             $prepare->bindValue(":username", $username);
             $prepare->bindValue(":password", $password);
             $prepare->bindValue(":type", $account_type, PDO::PARAM_INT);
+            $prepare->bindValue(":chats", '');
             return $prepare->execute() ? 1 : 0;
         }catch(PDOException $e) {
             $this->createLog("Accounts_DB", $e);
@@ -140,6 +142,58 @@ class Accounts_DB extends DB
             $this->createLog("Accounts_DB", $e);
         }
         return null;
+    }
+    public function get_chats(string $email): array {
+        $result = [];
+        try {
+            $prepare = $this->db->prepare("SELECT `user_chats` FROM `accounts` WHERE `email` = :email;");
+            $prepare->bindValue(":email", $email);
+            if ($prepare->execute()) {
+                $fetch = $prepare->fetch(PDO::FETCH_ASSOC);
+                if ($fetch !== false) {
+                    $result = explode(',', $fetch["user_chats"] ?? '');
+                }
+            }
+        }catch(PDOException $e) {
+            $this->createLog("Accounts_DB", $e);
+        }
+        return $result;
+    }
+    public function add_chat(string $email, int $chat_id): int {
+        try {
+            $chats = $this->get_chats($email);
+            if (count($chats) > 0 && !in_array($chat_id, $chats)) {
+                $chats[] = $chat_id;
+                $chats = implode(',', $chats);
+                $prepare = $this->db->prepare("UPDATE `accounts` SET `user_chats` = :chats WHERE `email` = :email;");
+                $prepare->bindValue(":chats", $chats);
+                $prepare->bindValue(":email", $email);
+                return $prepare->execute() ? 1 : 0;
+            }else return -1;
+        }catch(PDOException $e) {
+            $this->createLog("Accounts_DB", $e);
+            return -2;
+        }
+    }
+    public function remove_chat(string $email, int $chat_id): int
+    {
+        try {
+            $chats = $this->get_chats($email);
+            if (count($chats) > 0 && in_array($chat_id, $chats)) {
+                $index = array_search($chat_id, $chats);
+                if ($index !== false) {
+                    unset($chats[$index]);
+                    $chats = implode(',', $chats);
+                    $prepare = $this->db->prepare("UPDATE `accounts` SET `user_chats` = :chats WHERE `email` = :email;");
+                    $prepare->bindValue(":chats", $chats);
+                    $prepare->bindValue(":email", $email);
+                    return $prepare->execute() ? 1 : 0;
+                }else return -1;
+            }else return -2;
+        }catch(PDOException $e) {
+            $this->createLog("Accounts_DB", $e);
+            return -3;
+        }
     }
 
     private function getMaxId(): int {

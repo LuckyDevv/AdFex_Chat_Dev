@@ -1,7 +1,7 @@
 <?php
 
 namespace controllers;
-class Configuration
+final class Configuration
 {
     public const SETTINGS = [
         "name" => "YattoGram",

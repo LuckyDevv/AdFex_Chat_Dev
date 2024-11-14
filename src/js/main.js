@@ -1,5 +1,5 @@
 var search_opened = false;
-var last_chat = null; var last_check = null; var opened_chat = false;
+var last_chat = null; var last_check = null; var opened_chat = false; var current_chat_timeout = null;
 var editableDiv = document.querySelector('div[contenteditable="true"]');
 
 function setCookie(cookie_name, cookie_value, cookie_age=7200) {
@@ -79,7 +79,10 @@ function registerChatChoice() {
                 }
                 this.style.background = "rgba(152,97,172,0.7)";
                 last_chat = this;
-                setTimeout(function (){
+                if (current_chat_timeout !== null) {
+                    clearTimeout(current_chat_timeout);
+                }
+                current_chat_timeout = setTimeout(function (){
                     document.getElementById("chat_header").style.display = "flex";
                     document.getElementById("chat_input").style.display = "flex";
                     document.getElementById("chat_spinner").style.display = "none";
