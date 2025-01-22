@@ -89,7 +89,7 @@ function registerChatChoice() {
                     document.getElementById("chat_avatar").src = avatar.src;
                     document.getElementById("chat_name").src = name;
                     opened_chat = true;
-                }, 5000);
+                }, 500);
             }
         }
         if (!lct) {
