@@ -11,18 +11,18 @@ final class Configuration
         "domain" => ""
     ];
     public const MYSQL_CONNECTION = [
-        "host" => "localhost",
-        "port" => "3306",
-        "user" => "root",
-        "password" => "eather1192@How91",
+        "host" => "localhost", // Хост (айпи адрес) БД
+        "port" => "3306", // Порт БД
+        "user" => "root", // Пользователь БД
+        "password" => "", // Пароль от БД
     ];
     public const MAIL_SETTINGS = [
         "name" => "YattoGram",
         "smtp" => [
             "address" => "smtp.gmail.com",
             "port" => 465,
-            "username" => "wallet.eather@gmail.com",
-            "password" => "bcnd bkbx mkkj lhmu",
+            "username" => "", // Введите сюда почту
+            "password" => "", // Введите сюда пароль/пароль приложения
             "protocol" => "ssl"
         ]
     ];
